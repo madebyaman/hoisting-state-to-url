@@ -1,6 +1,6 @@
 import faker from "@faker-js/faker";
 import { ChevronDownIcon } from "@heroicons/react/solid";
-import { ScrollRestoration } from "@remix-run/react";
+import { useState } from "react";
 
 faker.seed(123);
 
@@ -19,6 +19,14 @@ let people = faker.datatype.array(20).map(() => {
 });
 
 export default function Index() {
+  let [sort, setSort] = useState(null);
+  let [sortProp, desc] = sort?.split(":") || [];
+  let sortedPeople = [...people].sort((a,b) => {
+    return desc
+      ? b[sortProp]?.localeCompare(a[sortProp])
+      : a[sortProp]?.localeCompare(b[sortProp])
+  })
+
   return (
     <div className="max-w-6xl pt-16 mx-auto lg:pt-32">
     <div className="px-4 sm:px-6 lg:px-8">
@@ -38,72 +46,38 @@ export default function Index() {
               <table className="min-w-full divide-y divide-gray-300">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th
-                      scope="col"
-                      className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+                    <SortableColumn
+                      sort={sort}
+                      prop="name"
+                      onClick={sort => setSort(sort)}
                     >
-                      <button onClick={() => ScrollRestoration('name')} className="inline-flex group">
-                        Name
-                        <span className="flex-none invisible ml-2 text-gray-400 rounded group-hover:visible group-focus:visible">
-                          <ChevronDownIcon
-                            className="w-5 h-5"
-                            aria-hidden="true"
-                          />
-                        </span>
-                      </button>
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      Name
+                    </SortableColumn>
+                    <SortableColumn
+                      sort={sort}
+                      prop="title"
+                      onClick={sort => setSort(sort)}
                     >
-                      <a href="/" className="inline-flex group">
-                        Title
-                        <span className="flex-none ml-2 text-gray-900 bg-gray-200 rounded group-hover:bg-gray-300">
-                          <ChevronDownIcon
-                            className="w-5 h-5"
-                            aria-hidden="true"
-                          />
-                        </span>
-                      </a>
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      Title
+                    </SortableColumn>
+                    <SortableColumn
+                      sort={sort}
+                      prop="email"
+                      onClick={sort => setSort(sort)}
                     >
-                      <a href="/" className="inline-flex group">
-                        Email
-                        <span className="flex-none invisible ml-2 text-gray-400 rounded group-hover:visible group-focus:visible">
-                          <ChevronDownIcon
-                            className="flex-none invisible w-5 h-5 ml-2 text-gray-400 rounded group-hover:visible group-focus:visible"
-                            aria-hidden="true"
-                          />
-                        </span>
-                      </a>
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      Email
+                    </SortableColumn>
+                    <SortableColumn
+                      sort={sort}
+                      prop="Role"
+                      onClick={sort => setSort(sort)}
                     >
-                      <a href="/" className="inline-flex group">
-                        Role
-                        <span className="flex-none invisible ml-2 text-gray-400 rounded group-hover:visible group-focus:visible">
-                          <ChevronDownIcon
-                            className="flex-none invisible w-5 h-5 ml-2 text-gray-400 rounded group-hover:visible group-focus:visible"
-                            aria-hidden="true"
-                          />
-                        </span>
-                      </a>
-                    </th>
-                    <th
-                      scope="col"
-                      className="relative py-3.5 pl-3 pr-4 sm:pr-6"
-                    >
-                      <span className="sr-only">Edit</span>
-                    </th>
+                      Role
+                    </SortableColumn>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {people.map((person) => (
+                  {sortedPeople.map((person) => (
                     <tr key={person.email}>
                       <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 whitespace-nowrap sm:pl-6">
                         {person.name}
@@ -117,14 +91,6 @@ export default function Index() {
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
                         {person.role}
                       </td>
-                      <td className="relative py-4 pl-3 pr-4 text-sm font-medium text-right whitespace-nowrap sm:pr-6">
-                        <a
-                          href="/"
-                          className="text-indigo-600 hover:text-indigo-900"
-                        >
-                          Edit<span className="sr-only">, {person.name}</span>
-                        </a>
-                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -136,4 +102,32 @@ export default function Index() {
     </div>
   </div>
   );
+}
+
+function SortableColumn({onClick, prop, sort, children}) {
+  let [sortProp, desc] = sort?.split(":") || [];
+  let newSort;
+
+  if (!sort) {
+    newSort = prop;
+  } else if (sort === prop) {
+    newSort = `${prop}:desc`
+  } else {
+    newSort = null
+  }
+
+ return (
+<th className="py-3 5 pl-4 pr-3 text-left text-sm text-gray-900 sm:pl-6">
+  <button onClick={() => onClick(newSort)} className="font-semibold inline-flex group">
+    {children}
+    <span className={`${sortProp === 'name' ? "text-gray-900 bg-gray-200 group-hover:bg-gray-300" : "invisible text-gray-400 group-hover:visible group-focus:visible"} flex-none ml-2 rounded`}>
+      <ChevronDownIcon
+        className={`${desc ? 'rotate-180': ''} w-5 h-5`}
+        aria-hidden="true"
+      />
+    </span>
+  </button>
+</th>
+
+ )
 }
