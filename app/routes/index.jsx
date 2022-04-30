@@ -1,6 +1,7 @@
 import faker from "@faker-js/faker";
 import { ChevronDownIcon } from "@heroicons/react/solid";
 import { useState } from "react";
+import {Link, useSearchParams} from "@remix-run/react"
 
 faker.seed(123);
 
@@ -19,13 +20,16 @@ let people = faker.datatype.array(20).map(() => {
 });
 
 export default function Index() {
-  let [sort, setSort] = useState(null);
+  // let [sort, setSort] = useState(null);
+  let [searchParams] = useSearchParams()
+  let sort = searchParams.get('sort')
   let [sortProp, desc] = sort?.split(":") || [];
   let sortedPeople = [...people].sort((a,b) => {
     return desc
       ? b[sortProp]?.localeCompare(a[sortProp])
       : a[sortProp]?.localeCompare(b[sortProp])
   })
+
 
   return (
     <div className="max-w-6xl pt-16 mx-auto lg:pt-32">
@@ -47,30 +51,22 @@ export default function Index() {
                 <thead className="bg-gray-50">
                   <tr>
                     <SortableColumn
-                      sort={sort}
                       prop="name"
-                      onClick={sort => setSort(sort)}
                     >
                       Name
                     </SortableColumn>
                     <SortableColumn
-                      sort={sort}
                       prop="title"
-                      onClick={sort => setSort(sort)}
                     >
                       Title
                     </SortableColumn>
                     <SortableColumn
-                      sort={sort}
                       prop="email"
-                      onClick={sort => setSort(sort)}
                     >
                       Email
                     </SortableColumn>
                     <SortableColumn
-                      sort={sort}
-                      prop="Role"
-                      onClick={sort => setSort(sort)}
+                      prop="role"
                     >
                       Role
                     </SortableColumn>
@@ -104,29 +100,33 @@ export default function Index() {
   );
 }
 
-function SortableColumn({onClick, prop, sort, children}) {
+function SortableColumn({onClick, prop, children}) {
+  let [searchParams] = useSearchParams()
+  let sort = searchParams.get('sort')
   let [sortProp, desc] = sort?.split(":") || [];
   let newSort;
 
-  if (!sort) {
+  if (sortProp !== prop) {
     newSort = prop;
   } else if (sort === prop) {
     newSort = `${prop}:desc`
-  } else {
-    newSort = null
   }
 
+  let newSearchParams = new URLSearchParams({
+    sort: newSort
+  })
+
  return (
-<th className="py-3 5 pl-4 pr-3 text-left text-sm text-gray-900 sm:pl-6">
-  <button onClick={() => onClick(newSort)} className="font-semibold inline-flex group">
+<th className="py-3.5 first:pl-4 px-3 text-left text-sm text-gray-900 sm:pl-6" scope="col">
+  <Link to={newSort? `/?${newSearchParams}` : "/"} className="font-semibold inline-flex group">
     {children}
-    <span className={`${sortProp === 'name' ? "text-gray-900 bg-gray-200 group-hover:bg-gray-300" : "invisible text-gray-400 group-hover:visible group-focus:visible"} flex-none ml-2 rounded`}>
+    <span className={`${sortProp === prop ? "text-gray-900 bg-gray-200 group-hover:bg-gray-300" : "invisible text-gray-400 group-hover:visible group-focus:visible"} flex-none ml-2 rounded`}>
       <ChevronDownIcon
         className={`${desc ? 'rotate-180': ''} w-5 h-5`}
         aria-hidden="true"
       />
     </span>
-  </button>
+  </Link>
 </th>
 
  )
